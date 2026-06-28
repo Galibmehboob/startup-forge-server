@@ -158,6 +158,7 @@ async function run() {
             try {
                 const { role, skill, work, industry } = req.query;
 
+
                 const filter = {};
 
                 // Role Title Search
@@ -178,8 +179,11 @@ async function run() {
 
                 // Work Type Filter
                 if (work) {
+
+                    // console.log(work, work.split(","));
+
                     filter.work_type = {
-                        $in: [work]
+                        $in: work.split(",")
                     };
                 }
 
