@@ -33,6 +33,7 @@ async function run() {
         const db = client.db("startup_forge");
         const startupsCollection = db.collection("startups");
         const opportunitiesCollection = db.collection("opportunities")
+        const usersCollection = db.collection("users");
         const applicationsCollection = db.collection("applications")
         const paymentCollection = db.collection("payments")
 
@@ -46,6 +47,9 @@ async function run() {
 
 
         app.post("/api/startups", async (req, res) => {
+            const data = req.body
+            console.log(data);
+
             const {
                 startup_name,
                 logo,
@@ -62,14 +66,17 @@ async function run() {
                 description,
                 funding_stage,
                 founder_email,
-                createdAt: new Date(),
 
+                createdAt: new Date(),
             }
 
             const result = await startupsCollection.insertOne({
                 ...addData,
-
+                status: "pending",
             });
+
+
+
             res.send(result)
 
         })
@@ -99,9 +106,11 @@ async function run() {
             const result = await startupsCollection.updateOne(
                 { _id: new ObjectId(id) },
                 {
-                    $set: { ...updateData, status: "pending" }
+                    $set: updateData
                 }
             );
+
+
 
             res.send(result);
 
@@ -221,16 +230,47 @@ async function run() {
 
 
 
-
         app.post("/api/opportunities", async (req, res) => {
+
             const data = req.body;
 
 
-            const result = await opportunitiesCollection.insertOne({
-                ...data
-            });
-            res.send(result)
+            const founderEmail = data.founder_email;
 
+
+            const userCollection = db.collection("user");
+
+
+            const founder = await userCollection.findOne({
+                email: founderEmail
+            });
+
+
+
+            const opportunityCount =
+                await opportunitiesCollection.countDocuments({
+                    founder_email: founderEmail
+                });
+
+
+
+            if (opportunityCount >= 3 && !founder?.isPremium) {
+
+                return res.status(401).send({
+                    message: "Premium required"
+                });
+
+            }
+
+
+
+            const result = await opportunitiesCollection.insertOne({
+                ...data,
+                createdAt: new Date()
+            });
+
+
+            res.send(result);
 
         });
 
