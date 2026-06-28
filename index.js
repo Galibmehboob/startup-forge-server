@@ -63,10 +63,13 @@ async function run() {
                 funding_stage,
                 founder_email,
                 createdAt: new Date(),
-                status: "active"
+
             }
 
-            const result = await startupsCollection.insertOne(addData);
+            const result = await startupsCollection.insertOne({
+                ...addData,
+
+            });
             res.send(result)
 
         })
@@ -90,13 +93,13 @@ async function run() {
                 funding_stage,
                 founder_email,
                 createdAt: new Date(),
-                status: "active"
+
             }
 
             const result = await startupsCollection.updateOne(
                 { _id: new ObjectId(id) },
                 {
-                    $set: updateData
+                    $set: { ...updateData, status: "pending" }
                 }
             );
 
@@ -104,17 +107,7 @@ async function run() {
 
         });
 
-        app.post("/api/opportunities", async (req, res) => {
-            const data = req.body;
 
-
-            const result = await opportunitiesCollection.insertOne({
-                ...data
-            });
-            res.send(result)
-
-
-        });
         // const {
         //     startup_name,
         //     logo,
@@ -153,10 +146,52 @@ async function run() {
 
 
         app.get("/api/opportunities", async (req, res) => {
-            const cursor = opportunitiesCollection.find();
-            const result = await cursor.toArray();
-            res.send(result);
-        })
+            try {
+                const { role, skill, work, industry } = req.query;
+
+                const filter = {};
+
+                // Role Title Search
+                if (role) {
+                    filter.role_title = {
+                        $regex: role,
+                        $options: "i",
+                    };
+                }
+
+                // Required Skills Search
+                if (skill) {
+                    filter.required_skills = {
+                        $regex: skill,
+                        $options: "i",
+                    };
+                }
+
+                // Work Type Filter
+                if (work) {
+                    filter.work_type = {
+                        $in: [work]
+                    };
+                }
+
+                if (industry) {
+                    filter.industry = {
+                        $in: [industry]
+                    };
+                }
+
+                const opportunities = await opportunitiesCollection
+                    .find(filter)
+                    .toArray();
+
+                res.send(opportunities);
+            } catch (error) {
+                console.error(error);
+                res.status(500).send({
+                    message: "Internal Server Error",
+                });
+            }
+        });
 
 
         // Get single opportunity
@@ -184,15 +219,20 @@ async function run() {
         });
 
 
-        // Create opportunity
+
+
+
         app.post("/api/opportunities", async (req, res) => {
             const data = req.body;
 
-            const result = await opportunitiesCollection.insertOne(data);
 
-            res.send(result);
+            const result = await opportunitiesCollection.insertOne({
+                ...data
+            });
+            res.send(result)
+
+
         });
-
 
         // Update opportunity
         app.patch("/api/opportunities/:id", async (req, res) => {
