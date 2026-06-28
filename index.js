@@ -156,7 +156,8 @@ async function run() {
 
         app.get("/api/opportunities", async (req, res) => {
             try {
-                const { role, skill, work, industry } = req.query;
+                const { role, skill, work, level, page = 1,
+                    limit = 6 } = req.query;
 
 
                 const filter = {};
@@ -187,15 +188,31 @@ async function run() {
                     };
                 }
 
-                if (industry) {
-                    filter.industry = {
-                        $in: [industry]
+                if (level) {
+                    filter.commitment_level = {
+                        $in: [level]
                     };
                 }
 
+
+                const skip = (Number(page) - 1) * Number(limit);
+
+
                 const opportunities = await opportunitiesCollection
                     .find(filter)
+                    .skip(skip)
+                    .limit(Number(limit))
                     .toArray();
+
+                const total =
+                    await opportunitiesCollection.countDocuments(filter);
+
+                res.send({
+                    opportunities,
+                    total,
+                    totalPages: Math.ceil(total / limit),
+                    currentPage: Number(page)
+                });
 
                 res.send(opportunities);
             } catch (error) {
