@@ -135,15 +135,6 @@ async function run() {
         //     status: "active"
         // }
 
-        app.get("/api/opportunities/:startupId", async (req, res) => {
-            const { startupId } = req.params;
-
-            const result = await opportunitiesCollection
-                .find({ startup_id: startupId })
-                .toArray();
-
-            res.send(result);
-        });
 
         // Get all opportunities of a startup
         app.get("/api/opportunities/startup/:startupId", async (req, res) => {
@@ -157,15 +148,39 @@ async function run() {
         });
 
 
+
+
+
+
+        app.get("/api/opportunities", async (req, res) => {
+            const cursor = opportunitiesCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
+
         // Get single opportunity
         app.get("/api/opportunities/:id", async (req, res) => {
             const { id } = req.params;
 
-            const result = await opportunitiesCollection.findOne({
+            const opportunity = await opportunitiesCollection.findOne({
                 _id: new ObjectId(id),
             });
 
-            res.send(result);
+            if (!opportunity) {
+                return res.status(404).send({ message: "Opportunity not found" });
+            }
+
+            const startup = await startupsCollection.findOne({
+                _id: new ObjectId(opportunity.startup_id),
+            });
+
+            res.send({
+                ...opportunity,
+                startup_name: startup?.startup_name,
+                logo: startup?.logo,
+                industry: startup?.industry,
+            });
         });
 
 
