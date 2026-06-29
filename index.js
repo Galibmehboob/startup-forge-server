@@ -6,7 +6,12 @@ const cors = require("cors")
 const app = express();
 const port = process.env.PORT;
 
-app.use(cors());
+
+
+app.use(cors({
+    origin: "https://startup-forge-wheat.vercel.app",
+    credentials: true
+}));
 app.use(express.json());
 
 
