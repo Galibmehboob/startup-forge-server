@@ -329,11 +329,11 @@ async function run() {
         app.patch("/api/user/upgrade-premium/:email", async (req, res) => {
             const { email } = req.params;
 
-            console.log("Email:", email);
+            // console.log("Email:", email);
 
             const user = await usersCollection.findOne({ email });
 
-            console.log(user);
+            // console.log(user);
 
             const result = await usersCollection.updateOne(
                 { email },
@@ -344,12 +344,157 @@ async function run() {
                 }
             );
 
-            console.log(result);
+            // console.log(result);
 
             res.send(result);
         });
 
 
+
+        {/*Collaborator*/ }
+
+        app.post("/api/applications", async (req, res) => {
+
+            const data = req.body;
+
+
+            const application = {
+
+                opportunity_id: data.opportunity_id,
+
+                applicant_email: data.applicant_email,
+
+                portfolio_link: data.portfolio_link,
+
+                motivation: data.motivation,
+
+                status: "pending",
+
+                applied_at: new Date()
+
+            };
+
+
+            const alreadyApplied =
+                await applicationsCollection.findOne({
+                    opportunity_id: data.opportunity_id,
+                    applicant_email: data.applicant_email
+                });
+
+
+
+            if (alreadyApplied) {
+
+                return res.status(400).send({
+                    message: "Already applied"
+                })
+
+            }
+
+
+
+            const result =
+                await applicationsCollection.insertOne(application);
+
+
+            res.send(result);
+
+        })
+
+
+        // get collaborator applications
+
+        app.get("/api/applications/user/:email", async (req, res) => {
+
+
+            const email = req.params.email;
+
+
+            const applications =
+                await applicationsCollection.find({
+                    applicant_email: email
+                }).toArray();
+
+
+
+
+            const result = await Promise.all(
+
+                applications.map(async (app) => {
+
+
+                    const opportunity =
+                        await opportunitiesCollection.findOne({
+                            _id: new ObjectId(app.opportunity_id)
+                        });
+
+
+
+                    let startup = null;
+
+
+                    if (opportunity?.startup_id) {
+
+                        startup =
+                            await startupsCollection.findOne({
+                                _id: new ObjectId(opportunity.startup_id)
+                            });
+
+                    }
+
+
+
+                    return {
+
+                        ...app,
+
+                        opportunity_name:
+                            opportunity?.role_title || "Unknown",
+
+
+                        startup_name:
+                            startup?.startup_name || "Unknown"
+
+                    }
+
+
+                })
+
+            );
+
+
+
+            res.send(result);
+
+
+        });
+
+        app.get(
+            "/api/applications/check/:email/:id",
+            async (req, res) => {
+
+
+                const { email, id } = req.params;
+
+
+                const result =
+                    await applicationsCollection.findOne({
+
+                        applicant_email: email,
+
+                        opportunity_id: id
+
+                    });
+
+
+                res.send(result);
+
+
+            });
+
+
+
+        {/*Founder site*/ }
 
 
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
