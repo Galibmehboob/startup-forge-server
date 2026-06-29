@@ -33,7 +33,7 @@ async function run() {
         const db = client.db("startup_forge");
         const startupsCollection = db.collection("startups");
         const opportunitiesCollection = db.collection("opportunities")
-        const usersCollection = db.collection("users");
+        const usersCollection = db.collection("user");
         const applicationsCollection = db.collection("applications")
         const paymentCollection = db.collection("payments")
 
@@ -325,6 +325,29 @@ async function run() {
             res.send(result);
         });
 
+
+        app.patch("/api/user/upgrade-premium/:email", async (req, res) => {
+            const { email } = req.params;
+
+            console.log("Email:", email);
+
+            const user = await usersCollection.findOne({ email });
+
+            console.log(user);
+
+            const result = await usersCollection.updateOne(
+                { email },
+                {
+                    $set: {
+                        isPremium: true,
+                    },
+                }
+            );
+
+            console.log(result);
+
+            res.send(result);
+        });
 
 
 
