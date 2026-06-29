@@ -38,6 +38,27 @@ async function run() {
         const paymentCollection = db.collection("payments")
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         app.get("/api/startup/:email", async (req, res) => {
             const { email } = req.params;
             const result = await startupsCollection.findOne({ founder_email: email });
@@ -590,6 +611,117 @@ async function run() {
 
             res.send(result);
 
+
+        });
+
+
+
+        // ADMIN - GET ALL PAYMENTS
+
+        app.get("/api/payments", async (req, res) => {
+
+
+            const payments =
+                await paymentCollection
+                    .find({})
+                    .sort({
+                        paid_at: -1
+                    })
+                    .toArray();
+
+
+            res.send(payments);
+
+
+        });
+
+
+
+        // ADMIN UPDATE STARTUP STATUS
+
+        app.patch("/api/startups/status/:id", async (req, res) => {
+
+            const { id } = req.params;
+            const { status } = req.body;
+
+
+            const result = await startupsCollection.updateOne(
+
+                {
+                    _id: new ObjectId(id)
+                },
+
+                {
+                    $set: {
+                        status
+                    }
+                }
+
+            );
+
+
+            res.send(result);
+
+        });
+
+        // ADMIN GET ALL USERS
+
+        app.get("/api/admin/users", async (req, res) => {
+
+
+            const users =
+                await usersCollection
+                    .find({})
+                    .sort({
+                        createdAt: -1
+                    })
+                    .toArray();
+
+
+            res.send(users);
+
+
+        });
+
+
+        app.patch("/api/admin/users/toggle-block/:id", async (req, res) => {
+            const { id } = req.params;
+            const { isBlocked } = req.body;
+
+            const result = await usersCollection.updateOne(
+                { _id: new ObjectId(id) },
+                {
+                    $set: { isBlocked }
+                }
+            );
+
+            res.send(result);
+        });
+
+
+        // ADMIN UPDATE STARTUP STATUS
+
+        app.get("/api/admin/startups", async (req, res) => {
+
+            try {
+
+                const startups = await startupsCollection
+                    .find({})
+                    .toArray();
+
+
+                res.send(startups);
+
+
+            } catch (error) {
+
+                console.log(error);
+
+                res.status(500).send({
+                    message: "error"
+                });
+
+            }
 
         });
 
