@@ -350,6 +350,35 @@ async function run() {
         });
 
 
+        app.post("/api/payments", async (req, res) => {
+
+
+            const data = req.body;
+
+
+            const payment = {
+
+                user_email: data.user_email,
+
+                amount: data.amount,
+
+                transaction_id: data.transaction_id,
+
+                payment_status: data.payment_status,
+
+                paid_at: new Date()
+
+            };
+
+
+            const result =
+                await paymentCollection.insertOne(payment);
+
+
+            res.send(result);
+
+        });
+
 
         {/*Collaborator*/ }
 
@@ -495,7 +524,150 @@ async function run() {
 
 
         {/*Founder site*/ }
+        // founder applications
 
+        app.get("/api/applications/founder/:email", async (req, res) => {
+
+
+            const email = req.params.email;
+
+
+            const myOpportunities =
+                await opportunitiesCollection.find({
+                    founder_email: email
+                }).toArray();
+
+
+
+            const ids = myOpportunities.map(
+                item => item._id.toString()
+            );
+
+
+
+            const applications =
+                await applicationsCollection.find({
+                    opportunity_id: {
+                        $in: ids
+                    }
+                }).toArray();
+
+
+
+            const result = await Promise.all(
+
+                applications.map(async (app) => {
+
+
+                    const opportunity =
+                        await opportunitiesCollection.findOne({
+
+                            _id: new ObjectId(
+                                app.opportunity_id
+                            )
+
+                        });
+
+
+
+                    return {
+
+                        ...app,
+
+                        role_title:
+                            opportunity?.role_title
+
+
+                    }
+
+
+                })
+
+            );
+
+
+
+            res.send(result);
+
+
+
+        });
+
+        app.patch("/api/applications/:id", async (req, res) => {
+
+
+            const { status } = req.body;
+
+
+            const result =
+                await applicationsCollection.updateOne(
+
+                    {
+                        _id: new ObjectId(req.params.id)
+                    },
+
+                    {
+                        $set: {
+                            status
+                        }
+                    }
+
+                );
+
+
+            res.send(result);
+
+
+        });
+
+
+        app.post("/api/payments", async (req, res) => {
+
+
+            const data = req.body;
+
+
+            const payment = {
+
+                user_email: data.user_email,
+
+                amount: data.amount,
+
+                transaction_id: data.transaction_id,
+
+                payment_status: "success",
+
+                paid_at: new Date()
+
+            };
+
+
+            const result =
+                await paymentCollection.insertOne(payment);
+
+
+
+            // premium update
+
+            await userCollection.updateOne(
+
+                {
+                    email: data.user_email
+                },
+
+                {
+                    $set: {
+                        isPremium: true
+                    }
+                }
+
+            );
+
+
+            res.send(result);
+
+
+        });
 
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
