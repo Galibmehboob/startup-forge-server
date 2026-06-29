@@ -350,34 +350,7 @@ async function run() {
         });
 
 
-        app.post("/api/payments", async (req, res) => {
 
-
-            const data = req.body;
-
-
-            const payment = {
-
-                user_email: data.user_email,
-
-                amount: data.amount,
-
-                transaction_id: data.transaction_id,
-
-                payment_status: data.payment_status,
-
-                paid_at: new Date()
-
-            };
-
-
-            const result =
-                await paymentCollection.insertOne(payment);
-
-
-            res.send(result);
-
-        });
 
 
         {/*Collaborator*/ }
