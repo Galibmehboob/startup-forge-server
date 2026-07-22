@@ -9,8 +9,11 @@ const port = process.env.PORT || 3005;
 
 
 app.use(cors({
-    origin: "https://startup-forge-wheat.vercel.app",
-    credentials: true
+    origin: [
+        "http://localhost:3000",
+        "https://startup-forge-wheat.vercel.app",
+    ],
+    credentials: true,
 }));
 app.use(express.json());
 
@@ -43,27 +46,6 @@ async function run() {
         const paymentCollection = db.collection("payments")
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         app.get("/api/startup/:email", async (req, res) => {
             const { email } = req.params;
             const result = await startupsCollection.findOne({ founder_email: email });
@@ -71,6 +53,31 @@ async function run() {
 
         })
 
+
+        app.get("/api/startups", async (req, res) => {
+            try {
+
+                const startups = await startupsCollection
+                    .find({
+                        status: "active"
+                    })
+                    .sort({
+                        createdAt: -1
+                    })
+                    .toArray();
+
+                res.send(startups);
+
+            } catch (error) {
+
+                console.log(error);
+
+                res.status(500).send({
+                    message: "Failed to fetch startups"
+                });
+
+            }
+        });
 
         app.post("/api/startups", async (req, res) => {
             const data = req.body
@@ -175,7 +182,40 @@ async function run() {
             res.send(result);
         });
 
+        // Profile
+        app.get("/api/profile/:email", async (req, res) => {
 
+            const { email } = req.params;
+
+            const user = await usersCollection.findOne({
+                email
+            });
+
+            res.send(user);
+
+        });
+
+        app.patch("/api/profile/:email", async (req, res) => {
+
+            const { email } = req.params;
+
+            const data = req.body;
+
+            const result = await usersCollection.updateOne(
+
+                {
+                    email
+                },
+
+                {
+                    $set: data
+                }
+
+            );
+
+            res.send(result);
+
+        });
 
 
 
